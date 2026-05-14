@@ -2,21 +2,17 @@ import AppKit
 import Combine
 import SwiftUI
 
-// MARK: - Linear palette
+// MARK: - Claude palette
 
 private extension Color {
-    static let lCanvas       = Color(red: 1/255,   green: 1/255,   blue: 2/255)
-    static let lSurface1     = Color(red: 15/255,  green: 16/255,  blue: 17/255)
-    static let lSurface2     = Color(red: 20/255,  green: 21/255,  blue: 22/255)
-    static let lSurface3     = Color(red: 24/255,  green: 25/255,  blue: 26/255)
-    static let lHairline     = Color(red: 35/255,  green: 37/255,  blue: 42/255)
-    static let lHairlineStrong = Color(red: 52/255, green: 52/255, blue: 58/255)
-    static let lInk          = Color(red: 247/255, green: 248/255, blue: 248/255)
-    static let lInkMuted     = Color(red: 208/255, green: 214/255, blue: 224/255)
-    static let lInkSubtle    = Color(red: 138/255, green: 143/255, blue: 152/255)
-    static let lInkTertiary  = Color(red: 98/255,  green: 102/255, blue: 109/255)
-    static let lAccent       = Color(red: 94/255,  green: 106/255, blue: 210/255)
-    static let lAccentHover  = Color(red: 130/255, green: 143/255, blue: 255/255)
+    static let cBg         = Color(red: 250/255, green: 249/255, blue: 246/255)  // #FAF9F6
+    static let cSurface    = Color(red: 244/255, green: 241/255, blue: 236/255)  // #F4F1EC
+    static let cBorder     = Color(red: 232/255, green: 227/255, blue: 218/255)  // #E8E3DA
+    static let cInk        = Color(red: 25/255,  green: 25/255,  blue: 25/255)   // #191919
+    static let cInkMid     = Color(red: 107/255, green: 101/255, blue: 96/255)   // #6B6560
+    static let cInkFaint   = Color(red: 158/255, green: 151/255, blue: 144/255)  // #9E9790
+    static let cAccent     = Color(red: 217/255, green: 119/255, blue: 87/255)   // #D97757
+    static let cAccentDeep = Color(red: 201/255, green: 98/255,  blue: 63/255)   // #C9623F
 }
 
 // MARK: - Button styles
@@ -26,12 +22,12 @@ private struct PrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 13, weight: .medium))
-            .foregroundColor(.lInk)
+            .foregroundColor(.white)
             .frame(maxWidth: .infinity)
-            .frame(height: 32)
-            .background(configuration.isPressed ? Color.lAccentHover : Color.lAccent)
-            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-            .opacity(isEnabled ? 1 : 0.38)
+            .frame(height: 36)
+            .background(configuration.isPressed ? Color.cAccentDeep : Color.cAccent)
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .opacity(isEnabled ? 1 : 0.45)
     }
 }
 
@@ -40,16 +36,16 @@ private struct SecondaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 13, weight: .medium))
-            .foregroundColor(configuration.isPressed ? .lInk : .lInkMuted)
+            .foregroundColor(configuration.isPressed ? .cInk : .cInkMid)
             .frame(maxWidth: .infinity)
-            .frame(height: 32)
-            .background(configuration.isPressed ? Color.lSurface3 : Color.lSurface2)
-            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .frame(height: 36)
+            .background(configuration.isPressed ? Color.cSurface : Color.cBg)
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .stroke(Color.lHairline, lineWidth: 1)
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .stroke(Color.cBorder, lineWidth: 1)
             )
-            .opacity(isEnabled ? 1 : 0.38)
+            .opacity(isEnabled ? 1 : 0.45)
     }
 }
 
@@ -57,7 +53,7 @@ private struct GhostButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 11))
-            .foregroundColor(configuration.isPressed ? .lInkSubtle : .lInkTertiary)
+            .foregroundColor(configuration.isPressed ? .cInkMid : .cInkFaint)
     }
 }
 
@@ -222,11 +218,9 @@ class MainViewModel: ObservableObject {
 
     private func showScreenRecordingPermissionError() {
         if CGPreflightScreenCaptureAccess() {
-            // 权限已在系统设置中授权，但 ScreenCaptureKit 需要重启才能识别
             statusMessage = "权限已开启，请重启 App 以生效"
             showPermissionButton = false
         } else {
-            // 尚未授权
             statusMessage = "需要开启屏幕录制权限"
             pendingPermissionURL = "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"
             showPermissionButton = true
@@ -278,27 +272,26 @@ struct ShortcutRow: View {
         HStack(spacing: 0) {
             Text(label)
                 .font(.system(size: 12))
-                .foregroundColor(.lInkSubtle)
-                .frame(width: 56, alignment: .leading)
+                .foregroundColor(.cInkMid)
+                .frame(width: 60, alignment: .leading)
 
             Spacer().frame(width: 8)
 
-            // Key badge
             Button { isRecording.toggle() } label: {
                 Text(isRecording ? "请按键…" : (config?.displayString ?? "未设置"))
                     .font(.system(size: 11, weight: .medium).monospaced())
                     .foregroundColor(
-                        isRecording ? .lAccent
-                            : (config != nil ? .lInkMuted : .lInkTertiary)
+                        isRecording ? .cAccent
+                            : (config != nil ? .cInk : .cInkFaint)
                     )
                     .padding(.horizontal, 8)
                     .frame(minWidth: 72, minHeight: 24, maxHeight: 24)
-                    .background(Color.lSurface3)
-                    .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+                    .background(Color.cSurface)
+                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 5, style: .continuous)
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
                             .stroke(
-                                isRecording ? Color.lAccent : Color.lHairline,
+                                isRecording ? Color.cAccent : Color.cBorder,
                                 lineWidth: 1
                             )
                     )
@@ -341,62 +334,72 @@ struct MainView: View {
     var body: some View {
         VStack(spacing: 0) {
 
-            // ── Actions ──────────────────────────────────────────
-            VStack(alignment: .leading, spacing: 14) {
-
-                Text("截图工具")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.lInkSubtle)
-                    .tracking(0.6)
-                    .textCase(.uppercase)
-
-                VStack(spacing: 6) {
-                    Button("全屏截图") { dismissThenCapture { viewModel.captureFullScreen() } }
-                        .buttonStyle(PrimaryButtonStyle())
-                        .disabled(viewModel.isCapturing)
-                    Button("区域截图") { dismissThenCapture { viewModel.startRegionCapture() } }
-                        .buttonStyle(SecondaryButtonStyle())
-                        .disabled(viewModel.isCapturing)
-                    Button("滚动截图") {
-                        guard AXIsProcessTrusted() else {
-                            viewModel.requestAccessibilityPermission()
-                            return
-                        }
-                        dismissThenCapture { viewModel.startScrollCapture() }
-                    }
-                        .buttonStyle(SecondaryButtonStyle())
-                        .disabled(viewModel.isCapturing)
-                }
-
-                HStack(spacing: 6) {
-                    if viewModel.isCapturing {
-                        ProgressView()
-                            .scaleEffect(0.55)
-                            .frame(width: 12, height: 12)
-                    }
-                    Text(viewModel.statusMessage)
-                        .font(.system(size: 12))
-                        .foregroundColor(.lInkSubtle)
-                        .lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-
-                if viewModel.showPermissionButton {
-                    Button("打开系统设置") { viewModel.openSystemSettings() }
-                        .buttonStyle(SecondaryButtonStyle())
+            // ── Header ───────────────────────────────────────────
+            HStack(alignment: .center) {
+                Text("截图")
+                    .font(.custom("Georgia", size: 17).weight(.semibold))
+                    .foregroundColor(.cInk)
+                Spacer()
+                if viewModel.isCapturing {
+                    ProgressView()
+                        .scaleEffect(0.6)
+                        .frame(width: 14, height: 14)
+                        .tint(Color.cAccent)
                 }
             }
-            .padding(16)
+            .padding(.horizontal, 20)
+            .padding(.top, 20)
+            .padding(.bottom, 18)
 
-            Rectangle().fill(Color.lHairline).frame(height: 1)
+            // ── Actions ──────────────────────────────────────────
+            VStack(spacing: 8) {
+                Button("全屏截图") { dismissThenCapture { viewModel.captureFullScreen() } }
+                    .buttonStyle(PrimaryButtonStyle())
+                    .disabled(viewModel.isCapturing)
+                Button("区域截图") { dismissThenCapture { viewModel.startRegionCapture() } }
+                    .buttonStyle(SecondaryButtonStyle())
+                    .disabled(viewModel.isCapturing)
+                Button("滚动截图") {
+                    guard AXIsProcessTrusted() else {
+                        viewModel.requestAccessibilityPermission()
+                        return
+                    }
+                    dismissThenCapture { viewModel.startScrollCapture() }
+                }
+                .buttonStyle(SecondaryButtonStyle())
+                .disabled(viewModel.isCapturing)
+            }
+            .padding(.horizontal, 20)
+
+            // ── Status ───────────────────────────────────────────
+            Text(viewModel.statusMessage)
+                .font(.system(size: 11))
+                .foregroundColor(.cInkFaint)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 20)
+                .padding(.top, 12)
+
+            if viewModel.showPermissionButton {
+                Button("打开系统设置") { viewModel.openSystemSettings() }
+                    .buttonStyle(SecondaryButtonStyle())
+                    .padding(.horizontal, 20)
+                    .padding(.top, 8)
+            }
+
+            // ── Divider ──────────────────────────────────────────
+            Rectangle()
+                .fill(Color.cBorder)
+                .frame(height: 1)
+                .padding(.top, 18)
 
             // ── Shortcuts ────────────────────────────────────────
             VStack(alignment: .leading, spacing: 10) {
                 Text("快捷键")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.lInkSubtle)
-                    .tracking(0.6)
-                    .textCase(.uppercase)
+                    .font(.custom("Georgia", size: 11).italic())
+                    .foregroundColor(.cInkFaint)
+                    .padding(.bottom, 2)
 
                 ShortcutRow(label: "全屏截图", config: hotkeys.fullScreenConfig) {
                     HotkeyService.shared.setFullScreen($0)
@@ -408,22 +411,25 @@ struct MainView: View {
                     HotkeyService.shared.setScroll($0)
                 }
             }
-            .padding(16)
-
-            Rectangle().fill(Color.lHairline).frame(height: 1)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
 
             // ── Footer ───────────────────────────────────────────
+            Rectangle()
+                .fill(Color.cBorder)
+                .frame(height: 1)
+
             HStack {
                 Spacer()
                 Button("退出") { NSApp.terminate(nil) }
                     .buttonStyle(GhostButtonStyle())
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, 20)
             .padding(.vertical, 10)
         }
         .frame(width: 280)
-        .background(Color.lSurface1)
-        .preferredColorScheme(.dark)
+        .background(Color.cBg)
+        .preferredColorScheme(.light)
         .onAppear { viewModel.setupHotkeys() }
     }
 }
