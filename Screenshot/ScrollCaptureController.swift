@@ -42,7 +42,7 @@ class ScrollCaptureController {
         onComplete = completion
 
         registerEscHotkey()
-        ScrollToastController.shared.show("滚动截屏中……按 ESC 停止")
+        ScrollToastController.shared.show("滚动截屏中……按 ESC 停止", in: rect)
 
         if let first = try? regionCaptureService.captureRegion(rect: rect, from: baseImage) {
             frames.append(first)
@@ -56,6 +56,7 @@ class ScrollCaptureController {
             self.warpCursor(to: self.captureRect)
 
             var unchangedCount = 0
+            var bottomFrame: NSImage? = nil  // first stable frame at scroll bottom
             while !Task.isCancelled && self.isActive {
                 await self.smoothScroll(totalPoints: self.captureRect.height * 0.35)
                 try? await Task.sleep(for: .milliseconds(250))
@@ -71,10 +72,20 @@ class ScrollCaptureController {
                     self.frames.append(region)
                     self.lastThumb = thumb
                     unchangedCount = 0
+                    bottomFrame = nil
                 } else {
+                    if unchangedCount == 0 { bottomFrame = region }  // save first stable frame
                     unchangedCount += 1
                     if unchangedCount >= 3 { break }  // 连续 3 次无变化 = 到达底部
                 }
+            }
+            // contentChanged excludes the bottom 20% of the frame to avoid fixed-footer noise.
+            // The very last scroll step often only reveals content in that excluded zone, so it
+            // never gets added by the loop. Appending the first stable frame here lets
+            // stitchWithOverlap compute the true overlap; if there is genuinely new bottom
+            // content, it is recovered; if not, newHeight rounds to ~0 with no visual impact.
+            if unchangedCount >= 3, let frame = bottomFrame {
+                self.frames.append(frame)
             }
             self.finish()
         }
@@ -114,11 +125,39 @@ class ScrollCaptureController {
 
         let cb = onComplete; onComplete = nil
         guard !frames.isEmpty else {
-            ScrollToastController.shared.hide()
+            ScrollToastController.shared.hideImmediately()
             cb?(nil)
             return
         }
-        ScrollToastController.shared.show("滚动截屏完成", autoDismiss: true)
+        ScrollToastController.shared.show("滚动截屏完成", autoDismiss: true, in: captureRect)
+        cb?(stitchWithOverlap(frames))
+    }
+
+    // ESC path: cancel the capture loop, then take one final screenshot to recover any
+    // content that scrolled into view since the last captured frame, then stitch.
+    func captureAndFinish() async {
+        guard isActive else { return }
+        isActive = false
+        captureLoop?.cancel()
+        captureLoop = nil
+        unregisterEscHotkey()
+        ScrollToastController.shared.hideImmediately()
+
+        if !frames.isEmpty,
+           let full = try? await screenshotService.captureFullScreen(),
+           let region = try? regionCaptureService.captureRegion(rect: captureRect, from: full) {
+            let thumb = makeThumb(region)
+            if contentChanged(from: lastThumb, to: thumb) {
+                frames.append(region)
+            }
+        }
+
+        let cb = onComplete; onComplete = nil
+        guard !frames.isEmpty else {
+            cb?(nil)
+            return
+        }
+        ScrollToastController.shared.show("截屏完成", autoDismiss: true, autoDismissDelay: 1000, in: captureRect)
         cb?(stitchWithOverlap(frames))
     }
 
@@ -153,7 +192,7 @@ class ScrollCaptureController {
                 guard hkID.signature == 0x5343454B else {
                     return OSStatus(eventNotHandledErr)
                 }
-                Task { @MainActor in ScrollCaptureController.shared.finish() }
+                Task { @MainActor in await ScrollCaptureController.shared.captureAndFinish() }
                 return noErr
             },
             1, &spec, nil, &escHandlerRef

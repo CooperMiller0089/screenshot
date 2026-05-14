@@ -17,11 +17,11 @@ class ScrollToastController {
 
     // MARK: - Public API
 
-    func show(_ message: String, autoDismiss: Bool = false) {
+    func show(_ message: String, autoDismiss: Bool = false, autoDismissDelay: Int = 1000, in rect: CGRect? = nil) {
         dismissTask?.cancel()
         dismissTask = nil
 
-        buildOrUpdate(message: message)
+        buildOrUpdate(message: message, in: rect)
 
         window?.alphaValue = 0
         window?.orderFront(nil)
@@ -33,11 +33,17 @@ class ScrollToastController {
 
         if autoDismiss {
             dismissTask = Task {
-                try? await Task.sleep(for: .milliseconds(2000))
+                try? await Task.sleep(for: .milliseconds(autoDismissDelay))
                 guard !Task.isCancelled else { return }
                 self.hide()
             }
         }
+    }
+
+    func hideImmediately() {
+        dismissTask?.cancel()
+        dismissTask = nil
+        window?.orderOut(nil)
     }
 
     func hide() {
@@ -55,7 +61,7 @@ class ScrollToastController {
 
     // MARK: - Private
 
-    private func buildOrUpdate(message: String) {
+    private func buildOrUpdate(message: String, in captureRect: CGRect? = nil) {
         let hPad: CGFloat = 16
         let vPad: CGFloat = 10
         let font = NSFont.systemFont(ofSize: 13, weight: .medium)
@@ -66,8 +72,15 @@ class ScrollToastController {
         let toastH = ceil(textSize.height) + vPad * 2
 
         guard let screen = NSScreen.main else { return }
-        let x = screen.frame.minX + (screen.frame.width - toastW) / 2
-        let y = screen.frame.minY + screen.frame.height * 0.54
+        let x: CGFloat
+        let y: CGFloat
+        if let r = captureRect {
+            x = r.midX - toastW / 2
+            y = r.midY - toastH / 2
+        } else {
+            x = screen.frame.minX + (screen.frame.width - toastW) / 2
+            y = screen.frame.minY + screen.frame.height * 0.54
+        }
 
         if let win = window {
             win.setFrame(NSRect(x: x, y: y, width: toastW, height: toastH), display: false)
