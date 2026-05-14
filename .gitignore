@@ -1,0 +1,46 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Xcode build output
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# CocoaPods (if used)
+Pods/
+Podfile.lock
+
+# Fastlane (if used)
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# Certificates & secrets
+*.p8
+*.p12
+*.cer
+*.mobileprovision
+*.provisionprofile
+.env
+*.env.*
+secrets.*
+
+# Archives
+*.xcarchive
+*.ipa
+
+# Playground
+timeline.xctimeline
+playground.xcworkspace
+
+# Code coverage
+*.gcno
+*.gcda
