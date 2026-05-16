@@ -103,6 +103,7 @@ class ScrollToastController {
         win.hasShadow         = true
         win.ignoresMouseEvents = true
         win.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        win.sharingType       = .none
 
         let container = NSView(frame: NSRect(origin: .zero,
                                              size: NSSize(width: toastW, height: toastH)))
