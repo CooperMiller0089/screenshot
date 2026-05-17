@@ -37,6 +37,10 @@ secrets.*
 *.xcarchive
 *.ipa
 
+# Local build output
+.build/
+dist/
+
 # Playground
 timeline.xctimeline
 playground.xcworkspace
