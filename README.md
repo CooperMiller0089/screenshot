@@ -61,6 +61,7 @@ To change shortcuts, open the app panel and click any key badge in the **快捷�
 
 | Version | Changes |
 |---|---|
+| v1.1.1 | Fix: clipboard now writes PNG + TIFF (fixes paste in Figma, Notion, etc.); full-screen and region captures show "截图完成" toast on completion |
 | v1.1.0 | UI redesign — Claude design language (warm palette, Georgia serif, terracotta accent) |
 | v1.0.2 | Fix: toast notification no longer appears in scroll capture frames |
 | v1.0.1 | Fix: missing bottom content in scroll captures (both auto-stop and ESC exit) |
