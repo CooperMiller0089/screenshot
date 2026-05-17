@@ -90,7 +90,8 @@ class MainViewModel: ObservableObject {
                 let image = try await screenshotService.captureFullScreen()
                 let url = try fileSaveService.save(image: image)
                 clipboardService.copy(image: image)
-                statusMessage = "已保存：\(url.lastPathComponent)"
+                ScrollToastController.shared.show("截图完成", autoDismiss: true, in: nil)
+                statusMessage = "已保存并复制 · \(url.lastPathComponent)"
             } catch CaptureError.permissionDenied {
                 AppDelegate.shared?.openPanel()
                 showScreenRecordingPermissionError()
@@ -139,7 +140,8 @@ class MainViewModel: ObservableObject {
             let image = try regionCaptureService.captureRegion(rect: rect, from: baseImage)
             let url = try fileSaveService.save(image: image)
             clipboardService.copy(image: image)
-            statusMessage = "已保存：\(url.lastPathComponent)"
+            ScrollToastController.shared.show("截图完成", autoDismiss: true, in: rect)
+            statusMessage = "已保存并复制 · \(url.lastPathComponent)"
         } catch {
             statusMessage = "截图失败"
         }
@@ -186,7 +188,7 @@ class MainViewModel: ObservableObject {
                                     do {
                                         let url = try self.fileSaveService.save(image: image)
                                         self.clipboardService.copy(image: image)
-                                        self.statusMessage = "已保存：\(url.lastPathComponent)"
+                                        self.statusMessage = "已保存并复制 · \(url.lastPathComponent)"
                                     } catch {
                                         self.statusMessage = "保存失败"
                                     }
